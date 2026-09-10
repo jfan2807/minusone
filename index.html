@@ -45,7 +45,7 @@
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{height:100%}
   html{background:var(--page)}
-  body{background:var(--page);color:var(--ink);font-family:var(--sans);line-height:1.45;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;height:100dvh}
+  body{background:var(--page);color:var(--ink);font-family:var(--sans);line-height:1.45;position:fixed;inset:0;overflow:hidden;display:flex;align-items:center;justify-content:center;overscroll-behavior:none;touch-action:manipulation}
   body::before,body::after{content:'';position:fixed;border-radius:50%;pointer-events:none;z-index:0}
   body::before{width:560px;height:560px;left:-180px;top:-140px;background:radial-gradient(circle at 35% 35%, rgba(169,157,242,.5), rgba(169,157,242,0) 70%)}
   body::after{width:500px;height:500px;right:-160px;bottom:-120px;background:radial-gradient(circle at 60% 40%, rgba(240,137,127,.4), rgba(240,137,127,0) 70%)}
@@ -1581,15 +1581,36 @@ if('serviceWorker' in navigator && location.protocol === 'https:'){
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 
-/* scale the fixed phone frame to fit desktop viewports */
+/* device-aware sizing: mobile gets exact measured pixels (dvh is unreliable on iOS),
+   desktop gets the 390x844 frame scaled to the viewport */
 function fitPhone(){
+  // don't resize while the keyboard is up (visualViewport shrinks under focused inputs)
+  const ae = document.activeElement;
+  if(ae && /INPUT|SELECT|TEXTAREA/.test(ae.tagName)) return;
   const p = $('phone');
-  if(window.innerWidth < 520){ p.style.transform = ''; return; }
-  const s = Math.min((window.innerHeight - 36) / 844, (window.innerWidth - 36) / 390, 1.35);
-  p.style.transform = `scale(${s})`;
+  const vw = window.innerWidth;
+  const vh = Math.round((window.visualViewport && window.visualViewport.height) || window.innerHeight);
+  const mobile = vw < 600 || (window.matchMedia && matchMedia('(pointer:coarse)').matches && vw < 900);
+  if(mobile){
+    p.style.transform = '';
+    p.style.width = vw + 'px';
+    p.style.height = vh + 'px';
+    p.style.borderRadius = '0';
+    p.style.boxShadow = 'none';
+  } else {
+    p.style.width = '390px';
+    p.style.height = '844px';
+    p.style.borderRadius = '';
+    p.style.boxShadow = '';
+    const s = Math.min((vh - 36) / 844, (vw - 36) / 390, 1.35);
+    p.style.transform = `scale(${s})`;
+  }
 }
 window.addEventListener('resize', fitPhone);
+window.addEventListener('orientationchange', ()=>setTimeout(fitPhone, 250));
+if(window.visualViewport) window.visualViewport.addEventListener('resize', fitPhone);
 fitPhone();
+setTimeout(fitPhone, 300); // iOS reports stale viewport metrics right after launch
 
 /* keep streaks, quests, and cooling-lock countdowns live */
 setInterval(()=>{

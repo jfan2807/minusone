@@ -1,5 +1,5 @@
 /* MinusOne service worker — cache-first so the app works offline once installed */
-const CACHE = 'minusone-v1';
+const CACHE = 'minusone-v2';
 const ASSETS = [
   '.', 'index.html', 'manifest.json',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
@@ -21,6 +21,18 @@ self.addEventListener('activate', e => {
 });
 self.addEventListener('fetch', e => {
   if(e.request.method !== 'GET') return;
+  // navigations: network-first so app updates arrive; fall back to cache offline
+  if(e.request.mode === 'navigate'){
+    e.respondWith(
+      fetch(e.request).then(res => {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put('index.html', copy));
+        return res;
+      }).catch(() => caches.match('index.html'))
+    );
+    return;
+  }
+  // static assets: cache-first
   e.respondWith(
     caches.match(e.request, {ignoreSearch:true}).then(hit =>
       hit || fetch(e.request).then(res => {
