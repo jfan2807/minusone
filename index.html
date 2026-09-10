@@ -53,17 +53,16 @@
 
   /* ---------- phone frame: fixed 390x844, scaled to fit PC ---------- */
   .phone{position:relative;z-index:1;width:390px;height:844px;background:var(--sheet);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+  /* mobile: pin to all four screen edges — immune to unreliable iOS viewport metrics */
+  .phone.mobile{position:fixed;inset:0;width:auto;height:auto;border-radius:0;box-shadow:none;transform:none}
   @media (min-width:520px){
     .phone{border-radius:46px;box-shadow:0 40px 90px -35px rgba(20,40,28,.6)}
   }
-  @media (max-width:519px){
-    .phone{width:100dvw;height:100dvh;border-radius:0}
-  }
 
   /* ---------- hero bar (title lives on the art) ---------- */
-  .hero-bar{height:96px;position:relative;background:var(--forest);flex-shrink:0}
+  .hero-bar{height:calc(96px + env(safe-area-inset-top, 0px));position:relative;background:var(--forest);flex-shrink:0}
   .hero-bar > svg.art{position:absolute;inset:0;width:100%;height:100%}
-  .hero-content{position:relative;z-index:1;height:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 18px 0}
+  .hero-content{position:relative;z-index:1;height:100%;display:flex;align-items:center;justify-content:space-between;padding:calc(12px + env(safe-area-inset-top, 0px)) 18px 0}
   .hero-content h1{font-size:24px;font-weight:700;letter-spacing:-.03em;color:#f2f1eb;text-shadow:0 2px 14px rgba(20,40,28,.45)}
   .hero-content h1 em{font-style:italic;color:#c9befb;font-weight:700}
   .icon-row{display:flex;gap:8px}
@@ -256,7 +255,7 @@
 
   /* compact mode for short phones (iPhone SE class) */
   @media (max-height:700px){
-    .hero-bar{height:62px}
+    .hero-bar{height:calc(62px + env(safe-area-inset-top, 0px))}
     .hero-content{padding-top:6px}
     .hero-content h1{font-size:21px}
     .icon-btn{width:33px;height:33px}
@@ -1584,20 +1583,18 @@ if('serviceWorker' in navigator && location.protocol === 'https:'){
 /* device-aware sizing: mobile gets exact measured pixels (dvh is unreliable on iOS),
    desktop gets the 390x844 frame scaled to the viewport */
 function fitPhone(){
-  // don't resize while the keyboard is up (visualViewport shrinks under focused inputs)
-  const ae = document.activeElement;
-  if(ae && /INPUT|SELECT|TEXTAREA/.test(ae.tagName)) return;
   const p = $('phone');
   const vw = window.innerWidth;
   const vh = Math.round((window.visualViewport && window.visualViewport.height) || window.innerHeight);
-  const mobile = vw < 600 || (window.matchMedia && matchMedia('(pointer:coarse)').matches && vw < 900);
+  const standalone = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  const mobile = standalone || vw < 600 || (window.matchMedia && matchMedia('(pointer:coarse)').matches && vw < 900);
   if(mobile){
-    p.style.transform = '';
-    p.style.width = vw + 'px';
-    p.style.height = vh + 'px';
-    p.style.borderRadius = '0';
-    p.style.boxShadow = 'none';
+    // no measurements: pinned to all four screen edges via CSS
+    p.classList.add('mobile');
+    p.style.transform = ''; p.style.width = ''; p.style.height = '';
+    p.style.borderRadius = ''; p.style.boxShadow = '';
   } else {
+    p.classList.remove('mobile');
     p.style.width = '390px';
     p.style.height = '844px';
     p.style.borderRadius = '';

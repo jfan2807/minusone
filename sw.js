@@ -1,5 +1,5 @@
 /* MinusOne service worker — cache-first so the app works offline once installed */
-const CACHE = 'minusone-v2';
+const CACHE = 'minusone-v3';
 const ASSETS = [
   '.', 'index.html', 'manifest.json',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
