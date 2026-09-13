@@ -9,6 +9,8 @@
 ![Tests](https://img.shields.io/badge/tests-106%20scenarios-success?style=flat-square)
 ![License](https://img.shields.io/badge/license-all%20rights%20reserved-lightgrey?style=flat-square)
 
+**Live app:** https://jfan2807.github.io/minusone/ — open on your phone and Add to Home Screen for the full-screen offline experience.
+
 ---
 
 ## Overview
